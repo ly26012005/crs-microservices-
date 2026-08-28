@@ -25,8 +25,11 @@
 - GET /registrations/student/{studentId} : Danh sách môn học đã đăng ký theo sinh viên
 
 5. crs-frontend (cổng 5174/5173 - Giao diện người dùng)
-- Axios Client: Cấu hình baseURL = http://localhost:8080 (gọi toàn bộ qua Gateway)
-- GET /api/courses : Tra cứu danh sách môn học kèm keyword, page, size (Hook useCourses)
-- POST /api/auth/login : Gửi thông tin đăng nhập và lưu JWT Token
-- POST /api/registrations : Gửi yêu cầu đăng ký học phần kèm Bearer JWT
-- Quản lý 4 trạng thái giao diện: Loading, Success, Empty, Error (kèm nút Thử lại)
+- Axios Client: Đính kèm Bearer JWT tự động từ localStorage vào Authorization Header.
+- GET /api/courses: Tra cứu danh sách môn học (keyword, page, size).
+- POST /api/courses: Thêm môn học mới (Admin token + Validate client).
+- PUT /api/courses/{id}: Cập nhật môn học theo ID (Admin token).
+- DELETE /api/courses/{id}: Xóa môn học theo ID (Admin token + Confirm).
+- POST /api/auth/login: Đăng nhập & lưu JWT token.
+- POST /api/registrations: Đăng ký học phần cho sinh viên.
+- UI & State Sync: Tái sử dụng CourseForm (Thêm/Sửa), xử lý 4 trạng thái (Loading/Success/Empty/Error), hiển thị lỗi ApiErrorResponse và refetch danh sách tự động sau CRUD.

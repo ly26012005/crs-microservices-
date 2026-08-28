@@ -14,3 +14,15 @@ export interface PagedResponse<T> {
     number: number; // trang hien tai (bat dau tu 0)
     size: number;
 }
+// Thêm vào cuối file course.ts đã có từ Buổi 5
+export interface CourseFormValues {
+    tenMonHoc: string;
+    soTinChi: string; // Dùng string trong form để kiểm soát input rỗng, ép kiểu parseInt khi gửi API
+    soChoToiDa: string;
+}
+
+export const emptyCourseForm: CourseFormValues = {
+    tenMonHoc: '',
+    soTinChi: '',
+    soChoToiDa: '',
+};
