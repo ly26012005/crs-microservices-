@@ -1,8 +1,8 @@
-// path: crs-frontend/src/context/AuthContext.tsx
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import type { LoginResponse } from '../types/auth';
 
 interface AuthUser {
+    id: number; // Bổ sung id người dùng
     username: string;
     role: 'ADMIN' | 'STUDENT';
 }
@@ -35,7 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const login = (data: LoginResponse) => {
         localStorage.setItem(TOKEN_KEY, data.token);
-        const authUser: AuthUser = { username: data.username, role: data.role };
+        // Lưu cả id nhận được từ API vào AuthUser
+        const authUser: AuthUser = { id: data.userId, username: data.username, role: data.role };
         localStorage.setItem(USER_KEY, JSON.stringify(authUser));
         setUser(authUser);
     };
