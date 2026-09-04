@@ -36,8 +36,7 @@ export function useCourses(keyword: string, page: number, size = 10) {
             });
     }, [keyword, page, size]);
 
-    useEffect(() => {
-        fetchCourses();
+    useEffect(() => {fetchCourses();
     }, [fetchCourses]);
 
     return { courses, totalPages, state, errorMessage, refetch: fetchCourses };

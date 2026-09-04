@@ -19,8 +19,17 @@ export default function MyRegistrationsPage() {
     const [cancellingId, setCancellingId] = useState<number | null>(null);
     const { toast, showToast, clearToast } = useToast();
 
+    const formatDate = (dateInput: string | number[]) => {
+        if (!dateInput) return 'N/A';
+        if (Array.isArray(dateInput)) {
+            const [year, month, day, hour = 0, minute = 0] = dateInput;
+            return new Date(year, month - 1, day, hour, minute).toLocaleString('vi-VN');
+        }
+        const d = new Date(dateInput);
+        return isNaN(d.getTime()) ? 'N/A' : d.toLocaleString('vi-VN');
+    };
+
     const loadData = useCallback(async () => {
-        setLoading(true);
         setLoadError(null);
         try {
             const res = await getMyRegistrations();
@@ -32,13 +41,13 @@ export default function MyRegistrationsPage() {
                         const courseRes = await getCourseById(reg.courseId);
                         return { ...reg, courseName: (courseRes.data as Course).tenMonHoc };
                     } catch {
-                        return { ...reg, courseName: `Mon hoc #${reg.courseId} (khong tim thay thong tin)` };
+                        return { ...reg, courseName: `Môn học #${reg.courseId}` };
                     }
                 })
             );
             setRows(enriched);
         } catch (err) {
-            let message = 'Khong tai duoc danh sach dang ky.';
+            let message = 'Không tải được danh sách đăng ký.';
             if (axios.isAxiosError<ApiErrorResponse>(err) && err.response?.data?.message) {
                 message = err.response.data.message;
             }
@@ -49,18 +58,18 @@ export default function MyRegistrationsPage() {
     }, []);
 
     useEffect(() => {
-        loadData();
+        void loadData();
     }, [loadData]);
 
     const handleCancel = async (row: RegistrationRow) => {
-        if (!window.confirm(`Huy dang ky mon "${row.courseName}"?`)) return;
+        if (!window.confirm(`Hủy đăng ký môn "${row.courseName}"?`)) return;
         setCancellingId(row.id);
         try {
             await cancelRegistration(row.id);
-            showToast(`Da huy dang ky mon "${row.courseName}"`, 'success');
-            loadData();
+            showToast(`Đã hủy đăng ký môn "${row.courseName}"`, 'success');
+            setRows((prev) => prev.filter((item) => item.id !== row.id));
         } catch (err) {
-            let message = 'Huy dang ky khong thanh cong.';
+            let message = 'Hủy đăng ký không thành công.';
             if (axios.isAxiosError<ApiErrorResponse>(err) && err.response?.data?.message) {
                 message = err.response.data.message;
             }
@@ -72,27 +81,27 @@ export default function MyRegistrationsPage() {
 
     return (
         <div style={{ padding: 24, maxWidth: 800, margin: '0 auto' }}>
-            <h1>Mon hoc da dang ky</h1>
-            {loading && <p>Dang tai...</p>}
+            <h1>Môn học đã đăng ký</h1>
+            {loading && <p>Đang tải...</p>}
             {!loading && loadError && <p style={{ color: '#b91c1c' }}>{loadError}</p>}
-            {!loading && !loadError && rows.length === 0 && <p>Ban chua dang ky mon hoc nao.</p>}
+            {!loading && !loadError && rows.length === 0 && <p>Bạn chưa đăng ký môn học nào.</p>}
             {!loading && !loadError && rows.length > 0 && (
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                     <tr style={{ textAlign: 'left', borderBottom: '2px solid #333' }}>
-                        <th>Ten mon hoc</th>
-                        <th>Ngay dang ky</th>
-                        <th>Thao tac</th>
+                        <th>Tên môn học</th>
+                        <th>Ngày đăng ký</th>
+                        <th>Thao tác</th>
                     </tr>
                     </thead>
                     <tbody>
                     {rows.map((row) => (
                         <tr key={row.id} style={{ borderBottom: '1px solid #eee' }}>
                             <td>{row.courseName}</td>
-                            <td>{new Date(row.ngayDangKy).toLocaleString('vi-VN')}</td>
+                            <td>{formatDate(row.ngayDangKy)}</td>
                             <td>
-                                <button onClick={() => handleCancel(row)} disabled={cancellingId === row.id}>
-                                    {cancellingId === row.id ? 'Dang huy...' : 'Huy dang ky'}
+                                <button onClick={() => void handleCancel(row)} disabled={cancellingId === row.id}>
+                                    {cancellingId === row.id ? 'Đang hủy...' : 'Hủy đăng ký'}
                                 </button>
                             </td>
                         </tr>

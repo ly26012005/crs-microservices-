@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, type FormEvent } from 'react';
 import type { Course, CourseFormValues } from '../types/course';
 import { emptyCourseForm } from '../types/course';
 
 interface CourseFormProps {
-    editingCourse: Course | null; // null = chế độ Thêm; có dữ liệu = chế độ Sửa
+    editingCourse: Course | null;
     onSubmit: (values: CourseFormValues) => Promise<void>;
     onCancel: () => void;
     submitting: boolean;
@@ -19,9 +19,11 @@ export default function CourseForm({
                                    }: CourseFormProps) {
     const [values, setValues] = useState<CourseFormValues>(emptyCourseForm);
     const [clientErrors, setClientErrors] = useState<Partial<CourseFormValues>>({});
+    const [prevEditingCourse, setPrevEditingCourse] = useState<Course | null>(null);
 
-    // Nạp dữ liệu vào form mỗi khi chọn Sửa môn học khác
-    useEffect(() => {
+    // Đồng bộ state trực tiếp khi prop editingCourse thay đổi (Derived State Pattern)
+    if (editingCourse !== prevEditingCourse) {
+        setPrevEditingCourse(editingCourse);
         if (editingCourse) {
             setValues({
                 tenMonHoc: editingCourse.tenMonHoc,
@@ -32,36 +34,43 @@ export default function CourseForm({
             setValues(emptyCourseForm);
         }
         setClientErrors({});
-    }, [editingCourse]);
+    }
 
     const validate = (): boolean => {
         const errors: Partial<CourseFormValues> = {};
         if (!values.tenMonHoc.trim()) {
-            errors.tenMonHoc = 'Ten mon hoc khong duoc de trong';
+            errors.tenMonHoc = 'Tên môn học không được để trống';
         }
         const soTinChi = Number(values.soTinChi);
         if (!values.soTinChi || isNaN(soTinChi) || soTinChi <= 0) {
-            errors.soTinChi = 'So tin chi phai la so lon hon 0';
+            errors.soTinChi = 'Số tín chỉ phải là số lớn hơn 0';
         }
         const soChoToiDa = Number(values.soChoToiDa);
         if (!values.soChoToiDa || isNaN(soChoToiDa) || soChoToiDa <= 0) {
-            errors.soChoToiDa = 'So cho toi da phai la so lon hon 0';
+            errors.soChoToiDa = 'Số chỗ tối đa phải là số lớn hơn 0';
         }
         setClientErrors(errors);
         return Object.keys(errors).length === 0;
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         if (!validate()) return;
-        await onSubmit(values);
+
+        void (async () => {
+            try {
+                await onSubmit(values);
+            } catch {
+                // Xử lý thông qua serverError prop từ component cha
+            }
+        })();
     };
 
     return (
         <form onSubmit={handleSubmit} style={{ border: '1px solid #ddd', padding: 16, borderRadius: 8, marginBottom: 16 }}>
-            <h3>{editingCourse ? 'Sua mon hoc' : 'Them mon hoc moi'}</h3>
+            <h3>{editingCourse ? 'Sửa môn học' : 'Thêm môn học mới'}</h3>
             <div style={{ marginBottom: 8 }}>
-                <label>Ten mon hoc</label><br />
+                <label>Tên môn học</label><br />
                 <input
                     type="text"
                     value={values.tenMonHoc}
@@ -70,7 +79,7 @@ export default function CourseForm({
                 {clientErrors.tenMonHoc && <p style={{ color: '#b91c1c', margin: 0 }}>{clientErrors.tenMonHoc}</p>}
             </div>
             <div style={{ marginBottom: 8 }}>
-                <label>So tin chi</label><br />
+                <label>Số tín chỉ</label><br />
                 <input
                     type="number"
                     value={values.soTinChi}
@@ -79,7 +88,7 @@ export default function CourseForm({
                 {clientErrors.soTinChi && <p style={{ color: '#b91c1c', margin: 0 }}>{clientErrors.soTinChi}</p>}
             </div>
             <div style={{ marginBottom: 8 }}>
-                <label>So cho toi da</label><br />
+                <label>Số chỗ tối đa</label><br />
                 <input
                     type="number"
                     value={values.soChoToiDa}
@@ -89,11 +98,11 @@ export default function CourseForm({
             </div>
             {serverError && <p style={{ color: '#b91c1c' }}>{serverError}</p>}
             <button type="submit" disabled={submitting}>
-                {submitting ? 'Dang luu...' : (editingCourse ? 'Cap nhat' : 'Them moi')}
+                {submitting ? 'Đang lưu...' : (editingCourse ? 'Cập nhật' : 'Thêm mới')}
             </button>
             {editingCourse && (
                 <button type="button" onClick={onCancel} style={{ marginLeft: 8 }}>
-                    Huy
+                    Hủy
                 </button>
             )}
         </form>
